@@ -16,6 +16,9 @@ class LstmCellWithProjection(nn.Cell):
     cell_size : The dimension of the memory cell used for the LSTM.
     go_forward: The direction in which the LSTM is applied to the sequence.
         Forwards by default, or backwards if False.
+    recurrent_dropout_probability:The dropout probability to be used in a dropout scheme 
+    state_projection_clip_value:The magnitude with which to clip the hidden_state after projecting it.
+    memory_cell_clip_value: The magnitude with which to clip the memory cell.
     """
 
     def __init__(self,
@@ -42,11 +45,13 @@ class LstmCellWithProjection(nn.Cell):
 
         self.state_projection = nn.Dense(cell_size, hidden_size, has_bias=False)
 
-        self.squeeze = P.Squeeze(0)
+        
         self.div = P.Div()
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
         self.clamp = C.clip_by_value()
+        self.cast = P.Cast()
+        self.squeeze = P.Squeeze(0)
         self.unsqueeze = P.ExpandDims(0)
 
         self.reset_parameters()
@@ -69,17 +74,19 @@ class LstmCellWithProjection(nn.Cell):
         dropout_mask = self.div(binary_mask, (1.0-droppout_probability))
         return dropout_mask
 
-    def construct(self,inputs, 
-                 batch_lengths,
-                 initial_state):
+    def construct(self,inputs, batch_lengths, initial_state):
         """
         Args:
-        inputs:
-        batch_lengths:
-        initial_state:
+        inputs:A tensor of shape (batch_size, num_timesteps, input_size)
+            to apply the LSTM over.
+        batch_lengths:A list of length batch_size containing the lengths 
+            of the sequences in batch.
+        initial_state:A tuple (state, memory) representing the initial hidden state and memory
+            of the LSTM. The ``state`` has shape (1, batch_size, hidden_size) and the
+            ``memory`` has shape (1, batch_size, cell_size).
         """
         
-        batch_size = input.shape()[0]
+        batch_size = input.shape[0]
         total_timesteps = input.shape[1]
 
         output_accumulator = Tensor(np.zeros([batch_size, total_timesteps, \
@@ -96,9 +103,8 @@ class LstmCellWithProjection(nn.Cell):
             current_length_index = batch_size - 1
         else:
             current_length_index = 0
-        #dropout_mask: numpy array
         if self.recurrent_droppout_probability > 0.0 and self.training:
-            dropout_mask = get_dropout_mask(self.recurrent_droppout_probability,
+            dropout_mask = self.get_dropout_mask(self.recurrent_droppout_probability,
                                             full_batch_previous_state)
         else:
             dropout_mask = None
@@ -119,14 +125,14 @@ class LstmCellWithProjection(nn.Cell):
             # get the slices of the batch which we
             # need for the computation at this timestep.
             # shape (batch_size, cell_size)
-            previous_memory = Tensor(np.copy(full_batch_previous_memory.asnumpy() \
-                            [0: current_length_index + 1]), mindspore.float32)
+            previous_memory = self.cast(full_batch_previous_memory[0: current_length_index + 1], \
+                                        mindspore.float32 )
             # shape (batch_size, cell_size)
-            previous_state = Tensor(np.copy(full_batch_previous_state.asnumpy() \
-                            [0: current_length_index + 1]), mindspore.float32)
+            previous_state = self.cast(full_batch_previous_state[0: current_length_index + 1], \
+                                       mindspore.float32)
             # shape (batch_size, cell_size)
-            timestep_input = Tensor(np.copy(inputs.asnumpy() \
-                            [0: current_length_index + 1, index]), mindspore.float32)
+            timestep_input = self.cast(inputs[0: current_length_index + 1, index], \
+                                       mindspore.float32)
 
             # Do the projections for all the gates all at once.
             # Both have shape (batch_size, 4 * cell_size)
@@ -171,15 +177,16 @@ class LstmCellWithProjection(nn.Cell):
             # create a new variable for the the whole batch at this timestep 
             # and insert the result for the relevant elements of the batch into it.
             # clone
-            #full_batch_previous_memory = full_batch_previous_memory
+            full_batch_previous_memory = self.cast(full_batch_previous_memory, mindspore.float32)
+            full_batch_previous_state = self.cast(full_batch_previous_state, mindspore.float32)
             full_batch_previous_memory[0:current_length_index + 1] = memory
             full_batch_previous_state[0:current_length_index + 1] = timestep_output
             output_accumulator[0:current_length_index + 1, index] = timestep_output
 
             # shape:(num_layers * num_directions, batch_size, ...). As this
             # LSTM cell cannot be stacked, the first dimension here is just 1.
-        
             final_state = (self.unsqueeze(full_batch_previous_state,
                             self.unsqueeze(full_batch_previous_memory)))
+                            
             return output_accumulator, final_state
 
