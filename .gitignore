@@ -134,4 +134,4 @@ dmypy.json
 # for vscode
 .vscode
 
-data/
+dataset/
