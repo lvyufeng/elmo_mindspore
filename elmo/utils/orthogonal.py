@@ -1,6 +1,6 @@
 import numpy as np
 import mindspore
-from mindspore import Tensor,context
+from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 
@@ -23,7 +23,6 @@ def orthogonal(tensor, gain=1):
     """
    
     size_op = P.Size()
-    view = P.Reshape()
     transpose = P.Transpose()
     mul = P.Mul()
 

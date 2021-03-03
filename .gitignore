@@ -131,6 +131,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+kernel_meta/
+test.py
 # for vscode
 .vscode
 
