@@ -23,7 +23,6 @@ def orthogonal(tensor, gain=1):
     """
    
     size_op = P.Size()
-    view = P.Reshape()
     transpose = P.Transpose()
     mul = P.Mul()
 
