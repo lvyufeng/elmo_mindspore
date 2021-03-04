@@ -2,6 +2,7 @@ import mindspore
 import mindspore.nn as nn
 import mindspore.ops as P
 from elmo.nn.layers import Dense
+
 activation_map = {
     'tanh': P.Tanh(),
     'relu': P.ReLU()
