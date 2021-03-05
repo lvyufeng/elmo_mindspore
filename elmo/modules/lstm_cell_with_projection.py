@@ -6,7 +6,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 
 class LstmCellWithProjection(nn.Cell):
-    r"""
+    """
     Description:An LSTM with Recurrent Dropout and a projected and clipped hidden state and
     memory. 
     Args:

@@ -29,7 +29,7 @@ class HighWay(nn.Cell):
     def __init__(self, input_dim: int, num_layers: int=1, activation:str='relu'):
         super().__init__()
         self._input_dim = input_dim
-        self._layers = nn.CellList([Dense(input_dim, input * 2) for _ in range(num_layers)])
+        self._layers = nn.CellList([Dense(input_dim, input_dim * 2) for _ in range(num_layers)])
         self._activation = activation_map[activation]
         for layer in self._layers:
             # We should bias the highway layer to just carry its input forward.  We do that by

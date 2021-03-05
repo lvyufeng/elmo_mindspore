@@ -7,6 +7,11 @@ from mindspore.common.initializer import initializer, Uniform
 from elmo.modules.highway import HighWay
 from elmo.nn.layers import Conv1d, Dense, Embedding
 
+"""
+Notice: We don't use `bidirectional` flag to encode the input sequences
+on both side. To bidirectional usage, just initalize another Encoder instance.
+"""
+
 class CharacterEncoder(nn.Cell):
     """
     Compute context sensitive token representation using pretrained biLM.
@@ -18,38 +23,36 @@ class CharacterEncoder(nn.Cell):
     We add special entries at the beginning and end of each sequence corresponding
     to <S> and </S>, the beginning and end of sentence tokens.
     """
-    def __init__(self, options_file:str):
+    def __init__(self, 
+                filters,
+                n_filters,
+                max_chars_per_token,
+                char_embed_dim,
+                n_chars,
+                n_highway,
+                output_dim,
+                activation):
         super().__init__()
-        with open(options_file, 'r') as f:
-            self._options = json.load(f)
-        cnn_options = self._options['char_cnn']        
-        filters = cnn_options['filters']
-        n_filters = sum(f[1] for f in filters)
-        max_chars = cnn_options['max_characters_per_token']
-        char_embed_dim = cnn_options['embedding']['dim']
-        n_chars = cnn_options['n_characters']
-        n_highway = cnn_options['n_highway']
-        output_dim = self._options['lstm']['projection_dim']
 
-        self.max_chars_per_token = self._options['char_cnn']['max_characters_per_token']
+        self.max_chars_per_token = max_chars_per_token
 
         # init char_embedding
         self.char_embedding = Embedding(n_chars + 1, char_embed_dim, embedding_table=Uniform(1.0), padding_idx=0)
         # run convolutions
         convolutions = []
-        for i, (width, num) in enumerate(filters):
+        for (width, num) in filters:
             conv = Conv1d(
                 in_channels=char_embed_dim,
                 out_channels=num,
                 kernel_size=width,
                 has_bias=True
             )
+            convolutions.append(conv)
         self._convolutions = convolutions
         # activation for convolutions
-        cnn_options = self._options['char_cnn']
-        if cnn_options['activation'] == 'tanh':
+        if activation == 'tanh':
             self._activation = nn.Tanh()
-        elif cnn_options['activation'] == 'relu':
+        elif activation == 'relu':
             self._activation = nn.ReLU()
         else:
             raise ValueError("Unknown activation")
