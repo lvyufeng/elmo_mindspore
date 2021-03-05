@@ -1,8 +1,7 @@
 import mindspore
 import mindspore.nn as nn
 import mindspore.ops as P
-from elmo.nn.layers import Dense
-
+from elmo.utils.initializer import init_dense
 activation_map = {
     'tanh': P.Tanh(),
     'relu': P.ReLU()
@@ -16,6 +15,9 @@ class HighWay(nn.Cell):
     non-linearity, and :math:`g` is an element-wise gate, computed as :math:`sigmoid(B(x))`.
     This module will apply a fixed number of highway layers to its input, returning the final
     result.
+
+    Note: Tensorflow version is `y = (1 - g) * x + g * f(x)`, we use the same equation.
+    
     Parameters
     ----------
     input_dim : ``int``
@@ -23,32 +25,30 @@ class HighWay(nn.Cell):
         input_dim)``.
     num_layers : ``int``, optional (default=``1``)
         The number of highway layers to apply to the input.
-    activation : ``Callable[[torch.Tensor], torch.Tensor]``, optional (default=``torch.nn.functional.relu``)
+    activation : ``str``, optional (default=``relu``)
         The non-linearity to use in the highway layers.
     """
     def __init__(self, input_dim: int, num_layers: int=1, activation:str='relu'):
         super().__init__()
         self._input_dim = input_dim
-        self._layers = nn.CellList([Dense(input_dim, input_dim * 2) for _ in range(num_layers)])
+        self._layers = []
+        for i in num_layers:
+            carry = nn.Dense(input_dim, input_dim)
+            init_dense(carry, input_dim, -2.0)
+            transform = nn.Dense(input_dim, input_dim)
+            init_dense(transform, input_dim, 0.0)
+            self._layer.append((carry, transform))
+        
         self._activation = activation_map[activation]
-        for layer in self._layers:
-            # We should bias the highway layer to just carry its input forward.  We do that by
-            # setting the bias on `B(x)` to be positive, because that means `g` will be biased to
-            # be high, so we will carry the input forward.  The bias on `B(x)` is the second half
-            # of the bias vector in each Linear layer.
-            data = layer.bias.data
-            data[input_dim:] = 1
-            layer.bias.set_data(data)
 
     def construct(self, inputs):
-        current_input = inputs
         for layer in self._layers:
-            projected_input = layer(current_input)
-            linear_part = current_input
-            nonlinear_part, gate = P.Split(1, 2)(projected_input)
-            nonlinear_part = self._activation(nonlinear_part)
-            gate = P.Sigmoid()(gate)
-            current_input = gate * linear_part + (1 - gate) * nonlinear_part
+            carry_gate = layer[0](inputs)
+            carry_gate = P.Sigmoid()(carry_gate)
+            transform_gate = layer[1](inputs)
+            transform_gate = self._activation(transform_gate)
+            
+            current_input = carry_gate * transform_gate + (1 - carry_gate) * inputs
         return current_input
 
 if __name__ == "__main__":

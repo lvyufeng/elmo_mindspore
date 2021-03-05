@@ -3,7 +3,8 @@ import mindspore
 import mindspore.nn as nn
 import numpy as np
 import mindspore.ops as P
-from mindspore.common.initializer import initializer, Uniform
+from mindspore.common.initializer import Uniform
+from elmo.utils.initializer import init_dense
 from elmo.modules.highway import HighWay
 from elmo.nn.layers import Conv1d, Dense, Embedding
 
@@ -60,6 +61,7 @@ class CharacterEncoder(nn.Cell):
         self._highways = HighWay(n_filters, n_highway, 'relu')
         # projection layer
         self._projection = Dense(n_filters, output_dim, has_bias=True)
+        init_dense(self._projection, n_filters)
         # array operations
         self.transpose = P.Transpose()
         self.concat = P.Concat(-1)
