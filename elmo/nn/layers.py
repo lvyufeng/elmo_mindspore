@@ -2,7 +2,7 @@ import math
 import mindspore
 import mindspore.nn as nn
 from mindspore import Parameter, Tensor
-from mindspore.common.initializer import initializer, HeUniform, Uniform, Normal, _calculate_fan_in_and_fan_out
+from mindspore.common.initializer import initializer, HeUniform, Uniform, Normal, Constant, _calculate_fan_in_and_fan_out
 
 class Conv1d(nn.Conv1d):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=True):
