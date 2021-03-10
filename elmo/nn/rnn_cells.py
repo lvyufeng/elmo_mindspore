@@ -62,20 +62,22 @@ def gru_cell(input, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 class RNNCellBase(nn.Cell):
-    def __init__(self, input_size: int, hidden_size: int, bias: bool, num_chunks: int):
+    def __init__(self, input_size: int, cell_size: int, bias: bool, num_chunks: int, proj_size:int=None):
         super().__init__()
         self.input_size = input_size
-        self.hidden_size = hidden_size
+        self.cell_size = cell_size
         self.bias = bias
-        self.weight_ih = Parameter(Tensor(np.random.randn(num_chunks * hidden_size, input_size).astype(np.float32)))
-        self.weight_hh = Parameter(Tensor(np.random.randn(num_chunks * hidden_size, hidden_size).astype(np.float32)))
+
+        hidden_size = proj_size if proj_size else cell_size
+        self.weight_ih = Parameter(Tensor(np.random.randn(num_chunks * cell_size, input_size).astype(np.float32)))
+        self.weight_hh = Parameter(Tensor(np.random.randn(num_chunks * cell_size, hidden_size).astype(np.float32)))
         if bias:
-            self.bias_ih = Parameter(Tensor(np.random.randn(num_chunks * hidden_size).astype(np.float32)))
-            self.bias_hh = Parameter(Tensor(np.random.randn(num_chunks * hidden_size).astype(np.float32)))
+            self.bias_ih = Parameter(Tensor(np.random.randn(num_chunks * cell_size).astype(np.float32)))
+            self.bias_hh = Parameter(Tensor(np.random.randn(num_chunks * cell_size).astype(np.float32)))
         self.reset_parameters()
         
     def reset_parameters(self):
-        stdv = 1 / math.sqrt(self.hidden_size)
+        stdv = 1 / math.sqrt(self.cell_size)
         for weight in self.get_parameters():
             weight.set_data(initializer(Uniform(stdv), weight.shape))
             
@@ -84,9 +86,9 @@ class RNNCell(RNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, bias: bool=True, nonlinearity: str = "tanh"):
         super().__init__(input_size, hidden_size, bias, num_chunks=1)
         if nonlinearity not in self._non_linearity:
-            raise ValueError("Unknown nonlinearity: {}".format(self.nonlinearity))
+            raise ValueError("Unknown nonlinearity: {}".format(nonlinearity))
         self.nonlinearity = nonlinearity
-        
+        self.cell_type = 'RNN'
     def construct(self, input, hx):
         if self.nonlinearity == "tanh":
             ret = rnn_tanh_cell(input, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
@@ -98,30 +100,31 @@ class LSTMCell(RNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, bias: bool = True):
         super().__init__(input_size, hidden_size, bias, num_chunks=4)
         self.support_non_tensor_inputs = True
-        
+        self.cell_type = 'LSTM'
     def construct(self, input, hx):
         return lstm_cell(input, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
     
 class GRUCell(RNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, bias: bool = True):
         super().__init__(input_size, hidden_size, bias, num_chunks=3)
-        
+        self.cell_type = 'GRU'
     def construct(self, input, hx):
         return gru_cell(input, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
 
 class LSTMCellWithProjection(RNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, bias: bool = True, \
         cell_clip=None, proj_size=None, proj_clip=None):
-        super().__init__(input_size, hidden_size, bias, num_chunks=4)
+        super().__init__(input_size, hidden_size, bias, num_chunks=4, proj_size=proj_size)
 
         self.cell_clip = cell_clip
         self.proj_size = proj_size
         self.proj_clip = proj_clip
         if proj_size is not None:
-            self.proj_weight = Parameter(Tensor(np.zeros(hidden_size, proj_size)), mindspore.float32)
+            self.proj_weight = Parameter(Tensor(np.random.randn(hidden_size, proj_size).astype(np.float32)))
 
         self.matmul = P.MatMul()
 
+        self.cell_type = 'LSTM'
     def construct(self, input, hx):
         hy, cy = lstm_cell(input, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
         if self.cell_clip is not None:
