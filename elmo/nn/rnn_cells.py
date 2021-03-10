@@ -125,8 +125,8 @@ class LSTMCellWithProjection(RNNCellBase):
         self.matmul = P.MatMul()
 
         self.cell_type = 'LSTM'
-    def construct(self, input, hx):
-        hy, cy = lstm_cell(input, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
+    def construct(self, inputs, hx):
+        hy, cy = lstm_cell(inputs, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
         if self.cell_clip is not None:
             cy = P.clip_by_value(cy, -self.cell_clip, self.cell_clip)
         if self.proj_size is not None:

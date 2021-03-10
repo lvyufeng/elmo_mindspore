@@ -3,7 +3,7 @@ import mindspore
 import numpy as np
 from mindspore import Tensor
 from elmo.nn.rnn_cells import LSTMCell
-from elmo.nn.rnn_cell_wrapper import DropoutWrapper, ResidualWrapper, MultiRNNCell
+from elmo.nn.rnn_cell_wrapper import DropoutWrapper, ResidualWrapper
 
 class TestRNNCellWrapper(unittest.TestCase):
     def test_dropout_wrapper(self):
@@ -15,6 +15,7 @@ class TestRNNCellWrapper(unittest.TestCase):
         hy, cy = cell(inputs, (hx, cx))
 
         assert hy.shape[-1] == 20
+        assert cy.shape[-1] == 20
 
     def test_residual_wrapper(self):
         inputs = Tensor(np.random.randn(1, 20), mindspore.float32)
@@ -25,3 +26,4 @@ class TestRNNCellWrapper(unittest.TestCase):
         hy, cy = cell(inputs, (hx, cx))
 
         assert hy.shape[-1] == 20
+        assert cy.shape[-1] == 20

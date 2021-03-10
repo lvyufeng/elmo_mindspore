@@ -20,7 +20,7 @@ class DropoutWrapper(nn.Cell):
         inputs = self._input_dropout(inputs)
         outputs, new_state = self.cell(inputs, state)
         outputs = self._output_dropout(outputs)
-        new_state = self._state_dropout(state)
+        new_state = self._state_dropout(new_state)
 
         return outputs, new_state
 
