@@ -3,8 +3,10 @@ import mindspore.nn as nn
 import mindspore.ops as P
 from elmo.modules.embedding import CharacterEncoder
 from elmo.modules.lstm import ELMoLSTM
+from elmo.modules.loss import LossCell
+
 class LanguageModel(nn.Cell):
-    def __init__(self, options):
+    def __init__(self, options, training):
         """
         structure:
             embedding
@@ -15,7 +17,8 @@ class LanguageModel(nn.Cell):
         n_tokens_vocab = self.options['n_tokens_vocab']
         batch_size = self.options['batch_size']
         unroll_steps = self.options['unroll_steps']
-
+        sample_softmax = self.options.get('sample_softmax', True)
+        n_negative_samples_batch = self.options['n_negative_samples_batch']
         # LSTM options
         lstm_dim = self.options['lstm']['dim']
         projection_dim = self.options['lstm']['projection_dim']
@@ -40,8 +43,10 @@ class LanguageModel(nn.Cell):
         
         self.char_embedding = CharacterEncoder(filters, n_filters, max_chars, char_embed_dim, n_chars, n_highway, projection_dim, activation)
         self.bilstm = ELMoLSTM(projection_dim, lstm_dim, projection_dim, n_lstm_layers, keep_prob, cell_clip, proj_clip, use_skip_connections, is_training=True)
+
+        self.loss = LossCell(projection_dim, n_tokens_vocab, sample_softmax, n_negative_samples_batch, training=training)
     
-    def construct(self, inputs):
+    def construct(self, inputs, next_ids_foward, next_ids_backward):
         # (batch_size, sequence_length, embedding_dim)
         token_embedding = self.char_embedding(inputs)
         # (num_layers, batch_size, sequence_length, embedding_dim)
@@ -51,4 +56,5 @@ class LanguageModel(nn.Cell):
         # (batch_size, sequence_length, embedding_dim)
         forward, backward = P.Split(2, 2)(encoder_output)
 
-        return forward, backward
+        loss = self.loss((forward, backward), (next_ids_foward, next_ids_backward))
+        return loss
