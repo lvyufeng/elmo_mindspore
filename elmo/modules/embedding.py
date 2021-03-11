@@ -91,5 +91,5 @@ class CharacterEncoder(nn.Cell):
         token_embedding = self._projection(token_embedding)
 
         # reshape to (batch_size, sequence_length, embedding_dim)
-        batch_size, sequence_length, _ = inputs.shape()
+        batch_size, sequence_length, _ = inputs.shape
         return token_embedding.view(batch_size, sequence_length, -1)
