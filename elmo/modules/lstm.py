@@ -86,8 +86,6 @@ class ELMoLSTM(nn.Cell):
         c_n = ()
         outputs = ()
         for i, (forward_cell, backward_cell) in enumerate(zip(self.forward_layers, self.backward_layers)):
-            cache_forward = input_forward
-            cache_backward = input_backward
             offset = i * 2
             h_f_i = (h[0][offset], h[1][offset])
             h_b_i = (h[0][offset + 1], h[1][offset + 1])
@@ -103,9 +101,7 @@ class ELMoLSTM(nn.Cell):
             outputs += (output,)
             input_forward = output_f
             input_backward = output_b
-            if i != 0:
-                input_forward += cache_forward
-                input_backward += cache_backward
+
             h_t = P.Concat(1)((h_t_f[0], h_t_b[0]))
             c_t = P.Concat(1)((h_t_f[1], h_t_b[1]))
             h_n += (h_t,)
