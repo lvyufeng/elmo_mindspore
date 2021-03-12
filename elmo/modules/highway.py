@@ -1,7 +1,9 @@
 import mindspore
 import mindspore.nn as nn
 import mindspore.ops as P
-from elmo.utils.initializer import init_dense
+import numpy as np
+from mindspore.common.initializer import Normal, Constant
+
 activation_map = {
     'tanh': P.Tanh(),
     'relu': P.ReLU()
@@ -32,12 +34,10 @@ class HighWay(nn.Cell):
         super().__init__()
         self._input_dim = input_dim
         self._layers = []
-        for i in num_layers:
-            carry = nn.Dense(input_dim, input_dim)
-            init_dense(carry, input_dim, -2.0)
-            transform = nn.Dense(input_dim, input_dim)
-            init_dense(transform, input_dim, 0.0)
-            self._layer.append((carry, transform))
+        for _ in num_layers:
+            carry = nn.Dense(input_dim, input_dim, weight_init=Normal(np.sqrt(1.0 / input_dim)), bias_init=Constant(-2.0))
+            transform = nn.Dense(input_dim, input_dim, weight_init=Normal(np.sqrt(1.0 / input_dim)))
+            self._layers.append((carry, transform))
         
         self._activation = activation_map[activation]
 
@@ -50,7 +50,3 @@ class HighWay(nn.Cell):
             
             current_input = carry_gate * transform_gate + (1 - carry_gate) * inputs
         return current_input
-
-if __name__ == "__main__":
-    # wait for test
-    pass
