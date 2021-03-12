@@ -12,7 +12,7 @@ from mindspore import Tensor
 def _init_state(hidden_num, batch_size, hidden_size, proj_size, dtype):
     hx = Tensor(np.zeros((hidden_num, batch_size, proj_size)), dtype)
     cx = Tensor(np.zeros((hidden_num, batch_size, hidden_size)), dtype)
-    return (hx, hx)
+    return (hx, cx)
     
 class ELMoLSTM(nn.Cell):
     def __init__(
@@ -26,7 +26,7 @@ class ELMoLSTM(nn.Cell):
                 proj_clip:float=0.0,
                 skip_connections:bool=False,
                 is_training:bool=True,
-                batch_first=False):
+                batch_first=True):
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
