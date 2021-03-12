@@ -47,7 +47,13 @@ class LanguageModel(nn.Cell):
 
         self.loss = LossCell(projection_dim, n_tokens_vocab, sample_softmax, n_negative_samples_batch, training=training)
     
-    def construct(self, inputs, next_ids_foward, next_ids_backward):
+    def construct(self, inputs, next_ids_forward, next_ids_backward):
+        """
+            args:
+                inputs: (batch_size, sequence_length, max_chars)
+                next_ids_forward: (batch_size, sequence_length)
+                next_ids_backward: (batch_size, sequence_length)
+        """
         # (batch_size, sequence_length, embedding_dim)
         token_embedding = self.char_embedding(inputs)
         # (num_layers, batch_size, sequence_length, embedding_dim)
@@ -57,5 +63,5 @@ class LanguageModel(nn.Cell):
         # (batch_size, sequence_length, embedding_dim)
         forward, backward = P.Split(2, 2)(encoder_output)
 
-        loss = self.loss((forward, backward), (next_ids_foward, next_ids_backward))
+        loss = self.loss((forward, backward), (next_ids_forward, next_ids_backward))
         return loss
