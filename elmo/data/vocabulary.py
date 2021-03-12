@@ -60,6 +60,7 @@ class Vocabulary:
 
     def decode(self, ids):
         return ' '.join([self.id_to_word(cur_id) for cur_id in ids])
+        
     def encode(self, sentence, reverse=False, split=True):
         if split:
             word_ids = [self.word_to_id(cur_word) for cur_word in sentence.split()]
