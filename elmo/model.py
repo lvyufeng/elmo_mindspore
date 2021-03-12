@@ -14,6 +14,7 @@ class LanguageModel(nn.Cell):
             softmax
         """
         super().__init__()
+        self.options = options
         n_tokens_vocab = self.options['n_tokens_vocab']
         batch_size = self.options['batch_size']
         unroll_steps = self.options['unroll_steps']

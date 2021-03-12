@@ -32,12 +32,12 @@ class HighWay(nn.Cell):
         super().__init__()
         self._input_dim = input_dim
         self._layers = []
-        for i in num_layers:
+        for i in range(num_layers):
             carry = nn.Dense(input_dim, input_dim)
             init_dense(carry, input_dim, -2.0)
             transform = nn.Dense(input_dim, input_dim)
             init_dense(transform, input_dim, 0.0)
-            self._layer.append((carry, transform))
+            self._layers.append((carry, transform))
         
         self._activation = activation_map[activation]
 
