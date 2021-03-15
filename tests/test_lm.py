@@ -52,7 +52,7 @@ def get_data():
     return inputs, targets, targets_reverse
 
 class TestLanguageModel(unittest.TestCase):
-    '''def test_language_model(self):
+    def test_language_model(self):
         options_file = 'tests/fixtures/model/options.json'
         with open(options_file, 'r') as fin:
             options = json.load(fin)
@@ -60,7 +60,7 @@ class TestLanguageModel(unittest.TestCase):
         inputs, targets, targets_reverse = get_data()
         loss = lm(Tensor(inputs, mindspore.int32), Tensor(targets, mindspore.int32),
                  Tensor(targets_reverse, mindspore.int32))
-        assert loss > 0'''
+        assert loss > 0
 
     def test_language_model_with_batch(self):
         options_file = 'tests/fixtures/model/options.json'

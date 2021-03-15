@@ -3,8 +3,7 @@ import mindspore
 import mindspore.nn as nn
 import numpy as np
 import mindspore.ops as P
-from mindspore.common.initializer import Uniform
-from elmo.utils.initializer import init_dense
+from mindspore.common.initializer import Uniform, Normal
 from elmo.modules.highway import HighWay
 from elmo.nn.layers import Conv1d, Dense, Embedding
 
@@ -37,19 +36,6 @@ class CharacterEncoder(nn.Cell):
 
         self.max_chars_per_token = max_chars_per_token
 
-        # init char_embedding
-        self.char_embedding = Embedding(n_chars + 1, char_embed_dim, embedding_table=Uniform(1.0), padding_idx=0)
-        # run convolutions
-        convolutions = []
-        for (width, num) in filters:
-            conv = Conv1d(
-                in_channels=char_embed_dim,
-                out_channels=num,
-                kernel_size=width,
-                has_bias=True
-            )
-            convolutions.append(conv)
-        self._convolutions = convolutions
         # activation for convolutions
         if activation == 'tanh':
             self._activation = nn.Tanh()
@@ -57,11 +43,30 @@ class CharacterEncoder(nn.Cell):
             self._activation = nn.ReLU()
         else:
             raise ValueError("Unknown activation")
+
+        # init char_embedding
+        self.char_embedding = Embedding(n_chars + 1, char_embed_dim, embedding_table=Uniform(1.0), padding_idx=0)
+        # run convolutions
+        convolutions = []
+        for (width, num) in filters:
+            if activation == 'tanh':
+                cnn_weight_init = Normal(np.sqrt(1.0 / width * char_embed_dim))
+            elif activation == 'relu':
+                cnn_weight_init = Uniform(0.05)
+            conv = nn.Conv1d(
+                in_channels=char_embed_dim,
+                out_channels=num,
+                kernel_size=width,
+                has_bias=True,
+                weight_init=cnn_weight_init
+            )
+            convolutions.append(conv)
+        self._convolutions = convolutions
+
         # highway layers
         self._highways = HighWay(n_filters, n_highway, 'relu')
         # projection layer
-        self._projection = Dense(n_filters, output_dim, has_bias=True)
-        init_dense(self._projection, n_filters)
+        self._projection = nn.Dense(n_filters, output_dim, has_bias=True, weight_init=Normal(np.sqrt(1.0 / n_filters)))
         # array operations
         self.transpose = P.Transpose()
         self.concat = P.Concat(-1)
