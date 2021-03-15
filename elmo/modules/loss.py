@@ -34,6 +34,7 @@ class LossCell(nn.Cell):
             else:
                 next_token_id_flat = P.Squeeze(1)(next_token_id_flat)
                 output_scores = self.matmul(lstm_output, self.weight) + self.bias
+                output_scores = output_scores.view((-1, output_scores.shape[-1]))
                 loss = self.sparse_softmax_cross_entropy_with_logits(output_scores, next_token_id_flat)
 
             total_loss.append(loss)

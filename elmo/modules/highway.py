@@ -34,7 +34,7 @@ class HighWay(nn.Cell):
         super().__init__()
         self._input_dim = input_dim
         self._layers = []
-        for _ in num_layers:
+        for _ in range(num_layers):
             carry = nn.Dense(input_dim, input_dim, weight_init=Normal(np.sqrt(1.0 / input_dim)), bias_init=Constant(-2.0))
             transform = nn.Dense(input_dim, input_dim, weight_init=Normal(np.sqrt(1.0 / input_dim)))
             self._layers.append((carry, transform))

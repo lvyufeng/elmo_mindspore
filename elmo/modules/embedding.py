@@ -87,7 +87,7 @@ class CharacterEncoder(nn.Cell):
             convs += (convolved, )
         
         # (batch_size * sequence_length, n_filters)
-        token_embedding = self.concat(convolved)
+        token_embedding = self.concat(convs)
 
         # apply the highway layers (batch_size * sequence_length, n_filters)
         token_embedding = self._highways(token_embedding)
