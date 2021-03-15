@@ -42,10 +42,11 @@ class HighWay(nn.Cell):
         self._activation = activation_map[activation]
 
     def construct(self, inputs):
+        current_input = inputs
         for layer in self._layers:
-            carry_gate = layer[0](inputs)
+            carry_gate = layer[0](current_input)
             carry_gate = P.Sigmoid()(carry_gate)
-            transform_gate = layer[1](inputs)
+            transform_gate = layer[1](current_input)
             transform_gate = self._activation(transform_gate)
             
             current_input = carry_gate * transform_gate + (1 - carry_gate) * inputs
