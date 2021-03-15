@@ -8,6 +8,7 @@ from elmo.data.vocabulary import Vocabulary, UnicodeCharsVocabulary
 from elmo.data.dataset import LMDataset
 from elmo.modules.embedding import CharacterEncoder
 from elmo.nn.rnn_cells import LSTMCell
+from elmo.ops.sampled_softmax_loss import SampledSoftmaxLoss
 import json
 
 def get_data():
@@ -79,4 +80,11 @@ class TestLanguageModel(unittest.TestCase):
             inputs = Tensor(batch["tokens_characters"], mindspore.int32)
             targets = Tensor(batch["next_token_id"], mindspore.int32)
             loss = lm(inputs, targets, targets)
-    
+    def test_sotfmax(self):
+        inputs = Tensor(np.random.randn(2, 20, 16), mindspore.float32)
+        label = Tensor(np.random.randn(40, 1), mindspore.int32)
+        w = Tensor(np.random.randn(32, 16), mindspore.float32)
+        b = Tensor(np.random.randn(32), mindspore.float32)
+        sampled_softmax_loss = SampledSoftmaxLoss(16, 32, 1, seed=0, reduction='mean')
+        inputs = inputs.view((-1, 16))
+        loss = sampled_softmax_loss(w, b, label, inputs)

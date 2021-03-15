@@ -18,6 +18,7 @@ class LossCell(nn.Cell):
         super().__init__()
         self.training = training
         self.sample_softmax = sample_softmax
+        self.hidden_size = hidden_size
 
         self.weight = Parameter(Tensor(np.random.randn(vocab_size, hidden_size), mindspore.float32))
         self.bias = Parameter(Tensor(np.random.randn(vocab_size), mindspore.float32))
@@ -31,6 +32,7 @@ class LossCell(nn.Cell):
         for lstm_output, next_token_id in zip(lstm_outputs, next_ids):
             next_token_id_flat = next_token_id.view((-1, 1))
             if self.training and self.sample_softmax:
+                lstm_output = lstm_output.view((-1, self.hidden_size))
                 loss = self.sampled_softmax_loss(self.weight, self.bias, next_token_id_flat, lstm_output)
             else:
                 next_token_id_flat = P.Squeeze(1)(next_token_id_flat)
