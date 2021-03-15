@@ -26,7 +26,7 @@ class ELMoLSTM(nn.Cell):
                 proj_clip:float=0.0,
                 skip_connections:bool=False,
                 is_training:bool=True,
-                batch_first=True):
+                batch_first=False):
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -72,7 +72,7 @@ class ELMoLSTM(nn.Cell):
             x = P.Transpose()(x, (1, 0, 2))
         x, h = self._stacked_bi_dynamic_rnn(x, h, seq_length)
         if self.batch_first:
-            x = P.Transpose()(x, (1, 0, 2))
+           x = P.Transpose()(x, (0, 2, 1, 3))
         return x, h
 
     def _stacked_bi_dynamic_rnn(self, x, h, seq_length):

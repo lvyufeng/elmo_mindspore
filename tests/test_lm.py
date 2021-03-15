@@ -2,6 +2,7 @@ import unittest
 import mindspore
 import numpy as np
 from mindspore import Tensor
+import mindspore.ops as P
 from elmo.model import LanguageModel
 from elmo.data.vocabulary import Vocabulary, UnicodeCharsVocabulary
 from elmo.data.dataset import LMDataset
@@ -19,7 +20,6 @@ def get_data():
     #vocab = Vocabulary(vocab_path, validata_file=True)
     vocab = UnicodeCharsVocabulary(vocab_path, max_word_length=max_word_length)
     data = LMDataset(train_data, vocab)
-    lm = LanguageModel(options=options, training=True)
     batch_size = options['batch_size']
     cur_stream = [None] * batch_size
     no_more_data = False
@@ -52,13 +52,31 @@ def get_data():
     return inputs, targets, targets_reverse
 
 class TestLanguageModel(unittest.TestCase):
-    def test_language_model(self):
+    '''def test_language_model(self):
         options_file = 'tests/fixtures/model/options.json'
         with open(options_file, 'r') as fin:
             options = json.load(fin)
         lm = LanguageModel(options=options, training=True)
         inputs, targets, targets_reverse = get_data()
-        token_embedding = lm.char_embedding(Tensor(inputs, mindspore.int32))
-        print(token_embedding.shape)
         loss = lm(Tensor(inputs, mindspore.int32), Tensor(targets, mindspore.int32),
                  Tensor(targets_reverse, mindspore.int32))
+        assert loss > 0'''
+
+    def test_language_model_with_batch(self):
+        options_file = 'tests/fixtures/model/options.json'
+        with open(options_file, 'r') as fin:
+            options = json.load(fin)
+        lm = LanguageModel(options=options, training=True)
+        max_word_length = options['char_cnn']['max_characters_per_token']
+        train_data = './tests/fixtures/train/data.txt'
+        vocab_path = './tests/fixtures/train/vocab.txt'
+        vocab = UnicodeCharsVocabulary(vocab_path, max_word_length=max_word_length)
+
+        data = LMDataset(train_data, vocab)
+        for i, batch in enumerate(data.iter_batches(2, 20)):
+            if i == 3:
+                break
+            inputs = Tensor(batch["tokens_characters"], mindspore.int32)
+            targets = Tensor(batch["next_token_id"], mindspore.int32)
+            loss = lm(inputs, targets, targets)
+    

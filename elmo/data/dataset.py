@@ -126,7 +126,12 @@ class LMDataset(object):
             return None
     
     def iter_batches(self, batch_size, num_steps):
-        pass
+        for X in _get_batch(self.get_sentence(), batch_size, num_steps, 
+                            self.max_word_length):
+            # token_ids(batch_size, num_steps)
+            # char_inputs = (batch_size, num_steps, max_word_length)
+            # targets = Word id of next word (batch_size, num_steps)
+            yield X
     
     @property
     def vocab(self):

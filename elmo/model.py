@@ -43,7 +43,7 @@ class LanguageModel(nn.Cell):
         n_highway = cnn_options.get('n_highway')
         
         self.char_embedding = CharacterEncoder(filters, n_filters, max_chars, char_embed_dim, n_chars, n_highway, projection_dim, activation)
-        self.bilstm = ELMoLSTM(projection_dim, lstm_dim, projection_dim, n_lstm_layers, keep_prob, cell_clip, proj_clip, use_skip_connections, is_training=True)
+        self.bilstm = ELMoLSTM(projection_dim, lstm_dim, projection_dim, n_lstm_layers, keep_prob, cell_clip, proj_clip, use_skip_connections, is_training=True, batch_first=True)
 
         self.loss = LossCell(projection_dim, n_tokens_vocab, sample_softmax, n_negative_samples_batch, training=training)
     
@@ -62,6 +62,6 @@ class LanguageModel(nn.Cell):
         encoder_output = encoder_output[1]
         # (batch_size, sequence_length, embedding_dim)
         forward, backward = P.Split(2, 2)(encoder_output)
-
+        
         loss = self.loss((forward, backward), (next_ids_forward, next_ids_backward))
         return loss
