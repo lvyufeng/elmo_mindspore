@@ -64,24 +64,22 @@ class ELMoLSTM(nn.Cell):
         self.backward_layers = backward_layers
         self.dropout = nn.Dropout(keep_prob=keep_prob)
 
-    def construct(self, x, h=None, seq_length=None):
+    def construct(self, x, xr, h=None, seq_length=None):
         max_batch_size = x.shape[0] if self.batch_first else x.shape[1]
         if h is None:
             h = _init_state(self.num_layers * self.num_directions, max_batch_size, self.hidden_size, self.proj_size, x.dtype)
         if self.batch_first:
             x = P.Transpose()(x, (1, 0, 2))
-        x, h = self._stacked_bi_dynamic_rnn(x, h, seq_length)
+            xr = P.Transpose()(xr, (1, 0, 2))
+        x, h = self._stacked_bi_dynamic_rnn(x, xr, h, seq_length)
         if self.batch_first:
            x = P.Transpose()(x, (0, 2, 1, 3))
         return x, h
 
-    def _stacked_bi_dynamic_rnn(self, x, h, seq_length):
+    def _stacked_bi_dynamic_rnn(self, x, xr, h, seq_length):
         """stacked bidirectional dynamic_rnn"""
         input_forward = x
-        if seq_length is None:
-            input_backward = P.ReverseV2([0])(input_forward)
-        else:
-            input_backward = P.ReverseSequence(0, 1)(input_forward, seq_length)
+        input_backward = xr
         h_n = ()
         c_n = ()
         outputs = ()

@@ -24,7 +24,7 @@ class LossCell(nn.Cell):
         self.bias = Parameter(Tensor(np.random.randn(vocab_size), mindspore.float32))
 
         self.sampled_softmax_loss = SampledSoftmaxLoss(num_sampled, vocab_size, num_true, seed=seed)
-        self.sparse_softmax_cross_entropy_with_logits = nn.SoftmaxCrossEntropyWithLogits()
+        self.sparse_softmax_cross_entropy_with_logits = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         self.matmul = nn.MatMul(False, True)
         self.reduce_mean = P.ReduceMean()
     def construct(self, lstm_outputs, next_ids):

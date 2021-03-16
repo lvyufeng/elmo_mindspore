@@ -61,17 +61,19 @@ class LMDataset(object):
     A dataset is a list of tokenized files. Each file contains one sentence per line.
     Each sentence is pre-tokenized and white space jointed
     """
-    def __init__(self, filepattern, vocab, test=False, shuffle_on_load=False):
+    def __init__(self, filepattern, vocab, test=False, shuffle_on_load=False, reverse=False):
         self._vocab = vocab
         self._all_shards = glob.glob(filepattern)
         logging.info('Found %d shards at %s' % (len(self._all_shards), filepattern))
         self._shards_to_choose = []
+        self._reverse = reverse
 
         self._test = test
         self._shuffle_on_load = shuffle_on_load
         self._use_char_inputs = hasattr(vocab, 'encode_chars')
 
         self._ids = self._load_random_shard()
+        
 
     def _choose_random_shard(self):
         if len(self._shards_to_choose) == 0:
@@ -98,13 +100,21 @@ class LMDataset(object):
         logging.info('Loading data from: %s' % shard_name)
         with open(shard_name) as f:
             sentences = f.readlines()
-        
+
+        if self._reverse:
+            sentences_reverse = []
+            for sentence in sentences:
+                splitted = sentence.split()
+                splitted.reverse()
+                sentences_reverse.append(' '.join(splitted))
+            sentences = sentences_reverse
+
         if self._shuffle_on_load:
             random.shuffle(sentences)
         
-        ids = [self.vocab.encode(sentence) for sentence in sentences]
+        ids = [self.vocab.encode(sentence, self._reverse) for sentence in sentences]
         if self._use_char_inputs:
-            chars_ids = [self.vocab.encode_chars(sentence) for sentence in sentences]
+            chars_ids = [self.vocab.encode_chars(sentence, self._reverse) for sentence in sentences]
         else:
             chars_ids = [None] * len(ids)
         logging.info('Loaded %d sentences.' % len(ids))
@@ -136,3 +146,25 @@ class LMDataset(object):
     @property
     def vocab(self):
         return self._vocab
+    
+class BidirectionalLMDataset(object):
+    def __init__(self, filepattern, vocab, test=False, shuffle_on_load=False):
+        '''
+        bidirectional version of LMDataset
+        '''
+        self._data_forward = LMDataset(filepattern, vocab, test=test, reverse=False,
+                                        shuffle_on_load=shuffle_on_load)
+        self._data_backward = LMDataset(filepattern, vocab, test=test, reverse=True,
+                                        shuffle_on_load=shuffle_on_load)
+                                        
+    def iter_batches(self, batch_size, num_steps):
+        max_word_length = self._data_forward.max_word_length
+        for X, Xr in zip(
+            _get_batch(self._data_forward.get_sentence(), batch_size,
+                        num_steps, max_word_length),
+            _get_batch(self._data_backward.get_sentence(), batch_size,
+                        num_steps, max_word_length)
+        ):
+            for k, v in Xr.items():
+                X[k + '_reverse'] = v
+            yield X

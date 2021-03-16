@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from elmo.data.vocabulary import UnicodeCharsVocabulary, Vocabulary
-from elmo.data.dataset import LMDataset
+from elmo.data.dataset import LMDataset, BidirectionalLMDataset
 
 DATA_FIXTURES = 'tests/fixtures/data'
 TRAIN_FIXTURES = 'tests/fixtures/train'
@@ -199,13 +199,16 @@ class TestLMDataset(unittest.TestCase):
 
         return ret
 
-    def _load_data(self, reverse, chars):
+    def _load_data(self, reverse, chars, bidirectional=False):
         if chars:
             vocab = UnicodeCharsVocabulary(self._tmp_vocab, 5)
         else:
             vocab = Vocabulary(self._tmp_vocab)
 
-        data = LMDataset(self._tmp_train, vocab)
+        if not bidirectional:
+            data = LMDataset(self._tmp_train, vocab, reverse=reverse)
+        else:
+            data = BidirectionalLMDataset(self._tmp_train, vocab)
 
         return data
 
@@ -249,9 +252,10 @@ class TestLMDataset(unittest.TestCase):
         expected = self._expected(True, False)
         self._compare(expected, batches)
 
-    # def test_bi_lm_dataset(self):
-    #     for a1 in [True, False]:
-    #         for a2 in [True, False]:
-    #             batches = self._get_batches(a1, a2, True)
-    #             expected = self._expected(a1, a2, True)
-    #         self._compare(expected, batches)
+    def test_bi_lm_dataset(self):
+        for a1 in [True, False]:
+            for a2 in [True, False]:
+                batches = self._get_batches(a1, a2, True)
+                expected = self._expected(a1, a2, True)
+                print(batches, expected)
+            self._compare(expected, batches)
