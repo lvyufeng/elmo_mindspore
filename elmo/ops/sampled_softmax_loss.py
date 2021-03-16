@@ -51,7 +51,7 @@ class SampledSoftmaxLoss(_Loss):
     """
 
     def __init__(self, num_sampled, num_classes, num_true=1,
-                 sampled_values=None, remove_accidental_hits=False, seed=0,
+                 sampled_values=None, remove_accidental_hits=True, seed=0,
                  reduction='none'):
         super(SampledSoftmaxLoss, self).__init__(reduction)
 
@@ -100,8 +100,8 @@ class SampledSoftmaxLoss(_Loss):
         self.expand_dims = P.ExpandDims()
         self.dtype = P.DType()
         self.compute_accidental_hits = P.ComputeAccidentalHits(num_true)
+        self.scatter_nd = P.ScatterNd()
         
-        self.sparse_to_dense = P.SparseToDense()
     def construct(self, weights, biases, labels, inputs):
         _check_label_dtype(self.dtype(labels), self.cls_name)
 
@@ -155,7 +155,7 @@ class SampledSoftmaxLoss(_Loss):
             out_labels: A Tensor object with the same shape as `out_logits`.
         """
 
-        if not labels.dtype == mstype.int32:
+        if not self.dtype(labels) == mstype.int32:
             labels = self.cast(labels, mstype.int32)
         labels = self.reshape(labels, (-1, num_true))
         labels_flat = self.reshape(labels, (-1,))
@@ -202,7 +202,25 @@ class SampledSoftmaxLoss(_Loss):
         true_b = self.reshape(true_b, (-1, num_true))
         true_logits += true_b
         sampled_logits += sampled_b
+        if self.remove_accidental_hits:
+            acc_hits = self.compute_accidental_hits(labels, sampled)
+            acc_indices, acc_ids, acc_weights = acc_hits
             
+            # This is how SparseToDense expects the indices.
+            acc_indices_2d = self.reshape(self.cast(acc_indices, mstype.int32), (-1, 1))
+            acc_ids_2d_int32 = self.reshape(
+                self.cast(acc_ids, mstype.int32), (-1, 1))
+            sparse_indices = self.concat_dim1((acc_indices_2d, acc_ids_2d_int32))
+            # Create sampled_logits_shape = [batch_size, num_sampled]
+            sampled_logits_shape = sampled_logits.shape
+
+            if sampled_logits.dtype != acc_weights.dtype:
+                acc_weights = self.cast(acc_weights, sampled_logits.dtype)
+            
+            sampled_logits += self.sparse_to_dense(
+               sparse_indices,
+               acc_weights,
+               sampled_logits_shape)
         if subtract_log_q:
             # Subtract log of Q(l), prior probability that l appears in sampled.
             true_logits -= self.log(true_expected_count)
@@ -219,3 +237,10 @@ class SampledSoftmaxLoss(_Loss):
             self.zeros_like(sampled_logits)
         ))
         return out_logits, out_labels
+    
+    def sparse_to_dense(self, sparse_indices, sparse_values, output_shape):
+        
+        sparse_values_length = sparse_values.shape[0]
+        output = self.scatter_nd(sparse_indices[:sparse_values_length], sparse_values, output_shape)
+
+        return output
