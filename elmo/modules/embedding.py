@@ -58,10 +58,11 @@ class CharacterEncoder(nn.Cell):
                 out_channels=num,
                 kernel_size=width,
                 has_bias=True,
-                weight_init=cnn_weight_init
+                weight_init=cnn_weight_init,
+                pad_mode='valid'
             )
             convolutions.append(conv)
-        self._convolutions = convolutions
+        self._convolutions = nn.CellList(convolutions)
 
         # highway layers
         self._highways = HighWay(n_filters, n_highway, 'relu')
@@ -82,7 +83,7 @@ class CharacterEncoder(nn.Cell):
         for conv in self._convolutions:
             convolved = conv(character_embedding)
             # (batch_size * sequence_length, n_filters for this width)
-            convolved = self.max(convolved, axis=-1)
+            convolved = self.max(convolved, -1)
             convolved = self._activation(convolved)
             convs += (convolved, )
         

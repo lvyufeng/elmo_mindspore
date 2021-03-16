@@ -137,3 +137,4 @@ test.py
 .vscode
 
 dataset/
+analyze_fail.dat
