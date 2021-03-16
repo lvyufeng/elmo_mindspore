@@ -23,10 +23,10 @@ class LossCell(nn.Cell):
         self.weight = Parameter(Tensor(np.random.randn(vocab_size, hidden_size), mindspore.float32))
         self.bias = Parameter(Tensor(np.random.randn(vocab_size), mindspore.float32))
 
-        self.sampled_softmax_loss = SampledSoftmaxLoss(num_sampled, vocab_size, num_true, seed=seed, reduction='mean')
-        self.sparse_softmax_cross_entropy_with_logits = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        self.sampled_softmax_loss = SampledSoftmaxLoss(num_sampled, vocab_size, num_true, seed=seed)
+        self.sparse_softmax_cross_entropy_with_logits = nn.SoftmaxCrossEntropyWithLogits()
         self.matmul = nn.MatMul(False, True)
-
+        self.reduce_mean = P.ReduceMean()
     def construct(self, lstm_outputs, next_ids):
         total_loss = []
         for lstm_output, next_token_id in zip(lstm_outputs, next_ids):
@@ -39,7 +39,6 @@ class LossCell(nn.Cell):
                 output_scores = self.matmul(lstm_output, self.weight) + self.bias
                 output_scores = output_scores.view((-1, output_scores.shape[-1]))
                 loss = self.sparse_softmax_cross_entropy_with_logits(output_scores, next_token_id_flat)
-
-            total_loss.append(loss)
+            total_loss.append(self.reduce_mean(loss))
         
         return 0.5 * (total_loss[0] + total_loss[1])
