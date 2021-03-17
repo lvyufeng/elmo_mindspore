@@ -20,6 +20,7 @@ class TestCharEncoder(unittest.TestCase):
             'n_highway': 2}
 
     def test_char_encoder(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
         cnn_options = self.char_cnn
         filters = cnn_options['filters']
         n_filters = sum(f[1] for f in filters)

@@ -8,6 +8,7 @@ from mindspore import context
 class TestSampledSofrmaxLoss(unittest.TestCase):
     
     def test_char_encoder(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
         mindspore.set_seed(1)
         weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)
         biases = Tensor(np.random.randint(0, 9, [7]), mindspore.float32)

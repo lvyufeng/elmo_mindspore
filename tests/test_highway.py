@@ -7,6 +7,7 @@ from mindspore import context
 
 class TestHighWay(unittest.TestCase):
     def test_highway(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
         inputs = Tensor(np.random.randn(3, 10), mindspore.float32)
         highway = HighWay(10, 2)
 
