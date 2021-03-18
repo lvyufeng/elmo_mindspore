@@ -202,7 +202,7 @@ class SampledSoftmaxLoss(_Loss):
         true_b = self.reshape(true_b, (-1, num_true))
         true_logits += true_b
         sampled_logits += sampled_b
-        if self.remove_accidental_hits:
+        '''if self.remove_accidental_hits:
             acc_hits = self.compute_accidental_hits(labels, sampled)
             acc_indices, acc_ids, acc_weights = acc_hits
             
@@ -220,7 +220,7 @@ class SampledSoftmaxLoss(_Loss):
             sampled_logits += self.sparse_to_dense(
                sparse_indices,
                acc_weights,
-               sampled_logits_shape)
+               sampled_logits_shape)'''
         if subtract_log_q:
             # Subtract log of Q(l), prior probability that l appears in sampled.
             true_logits -= self.log(true_expected_count)

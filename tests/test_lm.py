@@ -1,6 +1,9 @@
 import unittest
-import mindspore
+import json
 import numpy as np
+
+import mindspore
+import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.ops as P
 from elmo.model import LanguageModel
@@ -9,10 +12,9 @@ from elmo.data.dataset import LMDataset, BidirectionalLMDataset
 from elmo.modules.embedding import CharacterEncoder
 from elmo.nn.rnn_cells import LSTMCell
 from elmo.ops.sampled_softmax_loss import SampledSoftmaxLoss
-import json
 
 from mindspore import context
-context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+#context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
 def get_data():
     options_file = 'tests/fixtures/model/options.json'
     with open(options_file, 'r') as fin:
@@ -80,7 +82,7 @@ class TestLanguageModel(unittest.TestCase):
 
         data =BidirectionalLMDataset(train_data, vocab)
 
-        for i, batch in enumerate(data.iter_batches(batch_size, 1)):
+        for i, batch in enumerate(data.iter_batches(batch_size, 3)):
             X = batch
             inputs = Tensor(batch["tokens_characters"], mindspore.int32)
             inputs_backward = Tensor(batch["tokens_characters_reverse"], mindspore.int32)
@@ -90,11 +92,3 @@ class TestLanguageModel(unittest.TestCase):
             loss = lm(inputs, inputs_backward, targets, targets_back)
             if i==3:
                 break
-            
-    '''def test_sotfmax(self):
-        inputs = Tensor(np.random.randn(40, 16), mindspore.float32)
-        label = Tensor(np.random.randn(40, 1), mindspore.int32)
-        w = Tensor(np.random.randn(32, 16), mindspore.float32)
-        b = Tensor(np.random.randn(32, ), mindspore.float32)
-        sampled_softmax_loss = SampledSoftmaxLoss(16, 32, 1, seed=0, reduction='mean')
-        loss = sampled_softmax_loss(w, b, label, inputs)'''
