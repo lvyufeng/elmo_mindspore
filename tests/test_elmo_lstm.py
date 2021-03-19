@@ -3,9 +3,11 @@ import mindspore
 import numpy as np
 from mindspore import Tensor
 from elmo.modules.lstm import ELMoLSTM
+from mindspore import context
 
 class TestELMoLSTM(unittest.TestCase):
     def test_elmo_lstm(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
         inputs = Tensor(np.random.randn(10, 3, 10), mindspore.float32)
         hx = Tensor(np.random.randn(4, 3, 30), mindspore.float32)
         cx = Tensor(np.random.randn(4, 3, 20), mindspore.float32)
@@ -21,6 +23,7 @@ class TestELMoLSTM(unittest.TestCase):
         assert cy.shape == (2, 3, 40)
 
     def test_elmo_lstm_batch_first(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
         inputs = Tensor(np.random.randn(3, 10, 10), mindspore.float32)
         hx = Tensor(np.random.randn(4, 3, 30), mindspore.float32)
         cx = Tensor(np.random.randn(4, 3, 20), mindspore.float32)

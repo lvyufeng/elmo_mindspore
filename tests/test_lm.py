@@ -14,7 +14,7 @@ from elmo.nn.rnn_cells import LSTMCell
 from elmo.ops.sampled_softmax_loss import SampledSoftmaxLoss
 
 from mindspore import context
-#context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
 def get_data():
     options_file = 'tests/fixtures/model/options.json'
     with open(options_file, 'r') as fin:
@@ -60,15 +60,15 @@ def get_data():
     return inputs, targets, targets_reverse
 
 class TestLanguageModel(unittest.TestCase):
-    # def test_language_model(self):
-    #     options_file = 'tests/fixtures/model/options.json'
-    #     with open(options_file, 'r') as fin:
-    #         options = json.load(fin)
-    #     lm = LanguageModel(options=options, training=True)
-    #     inputs, targets, targets_reverse = get_data()
-    #     loss = lm(Tensor(inputs, mindspore.int32), Tensor(targets, mindspore.int32),
-    #              Tensor(targets_reverse, mindspore.int32))
-    #     assert loss > 0
+    def test_language_model(self):
+        options_file = 'tests/fixtures/model/options.json'
+        with open(options_file, 'r') as fin:
+            options = json.load(fin)
+        lm = LanguageModel(options=options, training=True)
+        inputs, targets, targets_reverse = get_data()
+        loss = lm(Tensor(inputs, mindspore.int32), Tensor(targets, mindspore.int32),
+                 Tensor(targets_reverse, mindspore.int32))
+        assert loss > 0
     def test_language_model_with_batch(self):
         options_file = 'tests/fixtures/model/options.json'
         with open(options_file, 'r') as fin:

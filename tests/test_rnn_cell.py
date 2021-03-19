@@ -3,9 +3,11 @@ import mindspore
 import numpy as np
 from mindspore import Tensor
 from elmo.nn.rnn_cells import LSTMCellWithProjection, LSTMCell
+from mindspore import context
 
 class TestRNNCells(unittest.TestCase):
     def test_lstm_cell(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
         inputs = Tensor(np.random.randn(1, 10), mindspore.float32)
         hx = Tensor(np.random.randn(1, 20), mindspore.float32)
         cx = Tensor(np.random.randn(1, 20), mindspore.float32)
@@ -16,6 +18,7 @@ class TestRNNCells(unittest.TestCase):
         assert hy.shape[-1] == 20
 
     def test_lstm_cell_with_projection(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
         inputs = Tensor(np.random.randn(1, 10), mindspore.float32)
         hx = Tensor(np.random.randn(1, 30), mindspore.float32)
         cx = Tensor(np.random.randn(1, 20), mindspore.float32)
