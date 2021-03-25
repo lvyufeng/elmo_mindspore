@@ -4,11 +4,6 @@ import mindspore.ops as P
 import numpy as np
 from mindspore.common.initializer import Normal, Constant
 
-activation_map = {
-    'tanh': P.Tanh(),
-    'relu': P.ReLU()
-}
-
 class HighWay(nn.Cell):
     """
     A `Highway layer <https://arxiv.org/abs/1505.00387>`_ does a gated combination of a linear
@@ -39,7 +34,7 @@ class HighWay(nn.Cell):
             transform = nn.Dense(input_dim, input_dim, weight_init=Normal(np.sqrt(1.0 / input_dim)))
             self._layers.append((carry, transform))
         
-        self._activation = activation_map[activation]
+        self._activation = nn.get_activation(activation)
 
     def construct(self, inputs):
         current_input = inputs

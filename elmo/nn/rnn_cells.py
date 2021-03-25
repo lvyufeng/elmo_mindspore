@@ -5,6 +5,7 @@ import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore import Tensor, Parameter
 from mindspore.common.initializer import initializer, Uniform
+from elmo.utils.glorot_uniform import glorot_uniform
 from typing import Tuple
 
 def rnn_tanh_cell(input, hidden, w_ih, w_hh, b_ih, b_hh):
@@ -69,11 +70,11 @@ class RNNCellBase(nn.Cell):
         self.bias = bias
 
         hidden_size = proj_size if proj_size else cell_size
-        self.weight_ih = Parameter(Tensor(np.random.randn(num_chunks * cell_size, input_size).astype(np.float32)))
-        self.weight_hh = Parameter(Tensor(np.random.randn(num_chunks * cell_size, hidden_size).astype(np.float32)))
+        self.weight_ih = Parameter(glorot_uniform(num_chunks * cell_size, input_size))
+        self.weight_hh = Parameter(glorot_uniform(num_chunks * cell_size, hidden_size))
         if bias:
-            self.bias_ih = Parameter(Tensor(np.random.randn(num_chunks * cell_size).astype(np.float32)))
-            self.bias_hh = Parameter(Tensor(np.random.randn(num_chunks * cell_size).astype(np.float32)))
+            self.bias_ih = Parameter(Tensor(np.zeros((num_chunks * cell_size)).astype(np.float32)))
+            self.bias_hh = Parameter(Tensor(np.zeros((num_chunks * cell_size)).astype(np.float32)))
         self.reset_parameters()
         
     def reset_parameters(self):
