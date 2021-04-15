@@ -8,7 +8,7 @@ from mindspore import context
 
 class TestRNNCellWrapper(unittest.TestCase):
     def test_dropout_wrapper(self):
-        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
         inputs = Tensor(np.random.randn(1, 10), mindspore.float32)
         hx = Tensor(np.random.randn(1, 20), mindspore.float32)
         cx = Tensor(np.random.randn(1, 20), mindspore.float32)
@@ -20,7 +20,7 @@ class TestRNNCellWrapper(unittest.TestCase):
         assert cy.shape[-1] == 20
 
     def test_residual_wrapper(self):
-        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
         inputs = Tensor(np.random.randn(1, 20), mindspore.float32)
         hx = Tensor(np.random.randn(1, 20), mindspore.float32)
         cx = Tensor(np.random.randn(1, 20), mindspore.float32)

@@ -7,7 +7,7 @@ from mindspore import context
 
 class TestHighWay(unittest.TestCase):
     def test_highway(self):
-        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
         inputs = Tensor(np.random.randn(3, 10), mindspore.float32)
         highway = HighWay(10, 2)
 
@@ -16,7 +16,7 @@ class TestHighWay(unittest.TestCase):
         assert outputs.shape == (3, 10)
          
     def test_highway_graph_mode(self):
-        context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+        context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
         inputs = Tensor(np.random.randn(3, 10), mindspore.float32)
         highway = HighWay(10, 2)
 

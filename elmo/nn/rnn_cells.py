@@ -70,8 +70,8 @@ class RNNCellBase(nn.Cell):
         self.bias = bias
 
         hidden_size = proj_size if proj_size else cell_size
-        self.weight_ih = Parameter(glorot_uniform(num_chunks * cell_size, input_size))
-        self.weight_hh = Parameter(glorot_uniform(num_chunks * cell_size, hidden_size))
+        self.weight_ih = Parameter(glorot_uniform((num_chunks * cell_size, input_size)))
+        self.weight_hh = Parameter(glorot_uniform((num_chunks * cell_size, hidden_size)))
         if bias:
             self.bias_ih = Parameter(Tensor(np.zeros((num_chunks * cell_size)).astype(np.float32)))
             self.bias_hh = Parameter(Tensor(np.zeros((num_chunks * cell_size)).astype(np.float32)))

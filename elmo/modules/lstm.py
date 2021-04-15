@@ -5,6 +5,7 @@ import numpy as np
 from elmo.nn.rnn import DynamicRNN
 from elmo.nn.rnn_cells import LSTMCellWithProjection
 from elmo.nn.rnn_cell_wrapper import ResidualWrapper, DropoutWrapper
+from elmo.ops.reverse import Reverse, ReverseSequence
 from mindspore.ops.primitive import constexpr
 from mindspore import Tensor
 
@@ -28,6 +29,8 @@ class ELMoLSTM(nn.Cell):
                 is_training:bool=True,
                 batch_first=False):
         super().__init__()
+        self.support_non_tensor_inputs = True
+
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -87,13 +90,13 @@ class ELMoLSTM(nn.Cell):
             offset = i * 2
             h_f_i = (h[0][offset], h[1][offset])
             h_b_i = (h[0][offset + 1], h[1][offset + 1])
- 
+
             output_f, h_t_f = forward_cell(input_forward, h_f_i, seq_length)
             output_b, h_t_b = backward_cell(input_backward, h_b_i, seq_length)
             if seq_length is None:
-                output_b = P.ReverseV2([0])(output_b)
+                output_b = Reverse(0)(output_b)
             else:
-                output_b = P.ReverseSequence(0, 1)(output_b, seq_length)
+                output_b = ReverseSequence(0, 1)(output_b, seq_length)
 
             output = P.Concat(2)((output_f, output_b))
             outputs += (output,)

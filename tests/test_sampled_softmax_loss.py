@@ -2,13 +2,13 @@ import unittest
 import mindspore
 import numpy as np
 from mindspore import Tensor
-from elmo.ops.sampled_softmax_loss import SampledSoftmaxLoss
+from mindspore.nn import SampledSoftmaxLoss
 from mindspore import context
 
 class TestSampledSofrmaxLoss(unittest.TestCase):
     
     def test_char_encoder(self):
-        context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
         mindspore.set_seed(1)
         weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)
         biases = Tensor(np.random.randint(0, 9, [7]), mindspore.float32)
@@ -21,7 +21,7 @@ class TestSampledSofrmaxLoss(unittest.TestCase):
         assert output.shape == labels.shape
 
     def test_char_encoder_graph_mode(self):
-        context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+        context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
         mindspore.set_seed(1)
         weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)

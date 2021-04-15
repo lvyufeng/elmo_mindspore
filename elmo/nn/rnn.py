@@ -7,6 +7,7 @@ class DynamicRNN(nn.Cell):
         super().__init__()
         self.cell = cell
         self.is_lstm = cell.cell_type == 'LSTM'
+        
     def recurrent(self, x, h):
         time_step = range(x.shape[0])
         outputs = []
